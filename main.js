@@ -1,15 +1,12 @@
 'use strict'
 
-var canvas = document.getElementById('canvas')
-var context = canvas.getContext('2d')
+const canvas = document.getElementById('canvas')
+const context = canvas.getContext('2d')
 
-var canvasWidth = canvas.width
-var canvasHeight = canvas.height
+const canvasWidth = canvas.width
+const canvasHeight = canvas.height
 
-var leftPressed = false
-var rightPressed = false
-var upPressed = false
-var downPressed = false
+const pressedKeys = { up: false, down: false, left: false, right: false }
 
 const keyMap = {
   39: 'right',
@@ -18,40 +15,29 @@ const keyMap = {
   40: 'down'
 }
 
-function keyDownHandler(event) {
-  let key = keyMap[event.keyCode]
+function clamp(min, max, num) {
+  return Math.min(Math.max(min, num), max)
+}
 
-  if (key === 'right') {
-    rightPressed = true
-  } else if (key === 'left') {
-    leftPressed = true
-  } else if (key === 'up') {
-    upPressed = true
-  } else if (key === 'down') {
-    downPressed = true
+function keyEventHandler(event, isPressed) {
+  let key = keyMap[event.keyCode]
+  if (typeof key !== 'undefined') {
+    pressedKeys[key] = isPressed
   }
 }
 
-function keyUpHandler(event) {
-  let key = keyMap[event.keyCode]
+window.addEventListener('keydown',  function(event) {
+  keyEventHandler(event, true)
+}, false)
 
-  if (key === 'right') {
-    rightPressed = false
-  } else if (key === 'left') {
-    leftPressed = false
-  } else if (key === 'up') {
-    upPressed = false
-  } else if (key === 'down') {
-    downPressed = false
-  }
-}
-
-window.addEventListener('keydown', keyDownHandler, false)
-window.addEventListener('keyup', keyUpHandler, false)
+window.addEventListener('keyup', function(event) {
+  keyEventHandler(event, false)
+}, false)
 
 function Player() {
   this.speed = 5
   this.size = 20
+  this.radius = this.size / 2
   this.x = this.size / 2
   this.y = this.size / 2
   this.color = '#D35400'
@@ -74,30 +60,26 @@ var p1 = new Player()
 p1.renderBall()
 
 function mainLoop(timestamp) {
-  let newX = -1
-  let newY = -1
-
-  if (leftPressed) {
-    newX = p1.x - p1.speed
-  } else if (rightPressed) {
-    newX = p1.x + p1.speed
-  } else if (upPressed) {
-    newY = p1.y - p1.speed
-  } else if (downPressed) {
-    newY = p1.y + p1.speed
+  if (pressedKeys['up']) {
+    p1.y = p1.y - p1.speed
   }
 
-  if (newX > 0 && newX < canvasWidth) {
-    p1.x = newX
+  if (pressedKeys['down']) {
+    p1.y = p1.y + p1.speed
   }
 
-  if (newY > 0 && newY < canvasHeight) {
-    p1.y = newY
+  if (pressedKeys['left']) {
+    p1.x = p1.x - p1.speed
   }
 
-  if (leftPressed || rightPressed || upPressed || downPressed) {
-    p1.draw()
+  if (pressedKeys['right']) {
+    p1.x = p1.x + p1.speed
   }
+
+  p1.x = clamp(p1.radius, canvasWidth - p1.radius, p1.x)
+  p1.y = clamp(p1.radius, canvasHeight - p1.radius, p1.y)
+
+  p1.draw()
 
   window.requestAnimationFrame(mainLoop)
 }
